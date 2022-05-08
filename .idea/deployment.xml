@@ -15,6 +15,8 @@
             <mapping deploy="/tmp/tmp.pOuy6SvgoW" local="$PROJECT_DIR$" />
           </mappings>
           <excludedPaths>
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-docker" />
             <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-docker" />
             <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug" />
           </excludedPaths>
