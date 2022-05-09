@@ -88,18 +88,43 @@ int main() {
 
             char key[50];
             char value[50];
+            char result[50] = "";
 
-            readCommand(socket_message, &key, &value);
+            int command = readCommand(socket_message, &key, &value);
             printf("%s \n", key);
             printf("%s \n", value);
+
+            switch (command) {
+                case 0:
+                    printf("Gehe in put\n");
+                    put(key, value);
+                    break;
+                case 1:
+                    printf("Gehe in get\n");
+                    get(key, &result);
+                    break;
+                case 2:
+                    printf("Gehe in del\n");
+                    del(key);
+                    break;
+                case 3:
+                    printf("CLOSE");
+                    close(connection);
+                    break;
+                case -2:
+                    printf("token NULL ERROR\n");
+                    break;
+                default:
+                    printf("Normal stop\n");
+                    break;
+            }
 
 
         }
         if (bytes_read_size == 2) {
             puts("Client disconnected");
             fflush(stdout);
+            close(sock);
         }
-        close(sock);
-        close(connection);
     }
 }
