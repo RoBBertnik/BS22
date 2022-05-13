@@ -122,13 +122,6 @@ int main() {
                     write(connection, output, strlen(output));
                 }
             }
-
-
-        }
-        if (bytes_read_size == 2) {
-            puts("Client disconnected");
-            fflush(stdout);
-            close(sock);
         }
     }
 }
