@@ -103,7 +103,6 @@ int main() {
                     case 1:
                         printf("Gehe in get\n");
                         success = get(key, value);
-
                         break;
                     case 2:
                         printf("Gehe in del\n");
