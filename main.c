@@ -92,8 +92,6 @@ int main() {
                 int success = 0;
 
                 int command = readCommand(socket_message, key, value);
-                printf("%s \n", key);
-                printf("%s \n", value);
 
                 switch (command) {
                     case 0:
