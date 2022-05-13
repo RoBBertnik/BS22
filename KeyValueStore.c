@@ -11,6 +11,9 @@ struct KeyAndValue{
 struct KeyAndValue database[1000];
 
 int put(char key[], char value[]) {
+    if(value[0] == '\0'){
+        return 0;
+    }
     int counter = 0;
     while(database[counter].key[0] != '\0') {
         if (strcmp(database[counter].key, key) == 0) {

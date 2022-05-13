@@ -62,7 +62,7 @@ int commandPrint(int command, char key[], char value[], int success, char output
 
     char * deleted = "key_deleted";
     char * nonexistent = "key_nonexistent";
-    char * full = "keys_full";
+    char * put_failed = "put_failed";
 
     if (command == 0) {
         strcat(output, "PUT");
@@ -93,7 +93,7 @@ int commandPrint(int command, char key[], char value[], int success, char output
             strcat(output, nonexistent);
         }
         else{
-            strcat(output, full);
+            strcat(output, put_failed);
         }
     }
     strcat(output, "\n");
