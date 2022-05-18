@@ -49,6 +49,8 @@ int readCommand(char input[], char key[], char value[]) {
         return 1;
     } else if (strcmp(command, "DEL") == 0) {
         return 2;
+    } else if (strcmp(command, "QUIT") == 0){
+        return 3;
     } else {
         return -1;
     }
