@@ -85,59 +85,61 @@ int main() {
 
         if ((childpid = fork()) == 0) {
             close(sock);
-        }
 
-        //Zurückschicken der Daten, solange der Client welche schickt (und kein Fehler passiert)
-        while (1) {
 
-            bytes_read_size = read(ClientSocket, socket_message, 2000);
+            //Zurückschicken der Daten, solange der Client welche schickt (und kein Fehler passiert)
+            while (1) {
 
-            int i = 0;
-            if (socket_message[0] != '\0') {
-                while (socket_message[i] != '\0') {
-                    if (socket_message[i] == '\r') {
-                        socket_message[i] = '\0';
-                        break;
+                bytes_read_size = read(ClientSocket, socket_message, 2000);
+
+                int i = 0;
+                if (socket_message[0] != '\0') {
+                    while (socket_message[i] != '\0') {
+                        if (socket_message[i] == '\r') {
+                            socket_message[i] = '\0';
+                            break;
+                        }
+                        i++;
                     }
-                    i++;
+                }
+
+                char key[50];
+                char value[50];
+                char output[100];
+                int success = 0;
+
+                int command = readCommand(socket_message, key, value);
+
+                switch (command) {
+                    case 0:
+                        printf("Gehe in put\n");
+                        success = put(key, value);
+                        break;
+                    case 1:
+                        printf("Gehe in get\n");
+                        success = get(key, value);
+                        break;
+                    case 2:
+                        printf("Gehe in del\n");
+                        success = del(key);
+                        break;
+                    case 3:
+                        printf("CLOSE\n");
+                        close(sock);
+                        close(ClientSocket);
+                        return 0;
+                    default:
+                        printf("Normal stop\n");
+                        printf("sending back the %d bytes I received... \n", bytes_read_size);
+                        write(ClientSocket, socket_message, bytes_read_size);
+                        break;
+                }
+                if (command > -1) {
+                    commandPrint(command, key, value, success, output);
+                    write(ClientSocket, output, strlen(output));
                 }
             }
 
-            char key[50];
-            char value[50];
-            char output[100];
-            int success = 0;
-
-            int command = readCommand(socket_message, key, value);
-
-            switch (command) {
-                case 0:
-                    printf("Gehe in put\n");
-                    success = put(key, value);
-                    break;
-                case 1:
-                    printf("Gehe in get\n");
-                    success = get(key, value);
-                    break;
-                case 2:
-                    printf("Gehe in del\n");
-                    success = del(key);
-                    break;
-                case 3:
-                    printf("CLOSE\n");
-                    close(sock);
-                    close(ClientSocket);
-                    return 0;
-                default:
-                    printf("Normal stop\n");
-                    printf("sending back the %d bytes I received... \n", bytes_read_size);
-                    write(ClientSocket, socket_message, bytes_read_size);
-                    break;
-            }
-            if (command > -1) {
-                commandPrint(command, key, value, success, output);
-                write(ClientSocket, output, strlen(output));
-            }
         }
         if (close(ClientSocket)) {
             return 0;
