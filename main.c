@@ -83,17 +83,24 @@ int main() {
         printf("Connection accepted from %s:%d\n", inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port));
 
 
-        if((childpid = fork()) == 0) {
-            close(sock);
+  //      if((childpid = fork()) == 0) {
+  //          close(sock);
 
             //Zurückschicken der Daten, solange der Client welche schickt (und kein Fehler passiert)
             while (1) {
 
                 bytes_read_size = read(ClientSocket, socket_message, 2000);
 
+                int i = 0;
                 if (socket_message[0] != '\0') {
-                    int message_length = strlen(socket_message);
-                    socket_message[message_length - 2] = '\0';
+                    while(socket_message[i] != '\0'){
+                        if(socket_message[i] == '\r') {
+                            socket_message[i] = '\0';
+                            break;
+                        }
+                        i++;
+                    }
+                }
 
                     char key[50];
                     char value[50];
@@ -131,11 +138,9 @@ int main() {
                         write(ClientSocket, output, strlen(output));
                     }
                 }
-            }
         }
-        if(close(ClientSocket)) {
-            return 0;
+ //       if(close(ClientSocket)) {
+  //          return 0;
         }
-   }
-
-}
+   //}
+//}
