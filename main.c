@@ -118,15 +118,15 @@ int main() {
                 switch (command) {
                     case 0:
                         printf("Gehe in put\n");
-                        success = put(key, value, database);
+                        success = put(key, value);
                         break;
                     case 1:
                         printf("Gehe in get\n");
-                        success = get(key, value, database);
+                        success = get(key, value);
                         break;
                     case 2:
                         printf("Gehe in del\n");
-                        success = del(key, database);
+                        success = del(key);
                         break;
                     case 3:
                         printf("CLOSE\n");
