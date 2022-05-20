@@ -1,14 +1,10 @@
 #include <stdio.h>
 #include "KeyValueStore.h"
 #include <string.h>
-
-
-struct KeyAndValue{
-    char key[100];
-    char value[100];
-} KeyAndValue;
+#include "KeyAndValue.h"
 
 struct KeyAndValue database[1000];
+
 
 int put(char key[], char value[]) {
     if(value[0] == '\0'){

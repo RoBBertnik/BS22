@@ -6,6 +6,8 @@
 #include <netinet/in.h>
 #include "KeyValueStore.h"
 #include "sub.h"
+#include "KeyAndValue.h"
+#include <sys/shm.h>
 
 
 #include <arpa/inet.h>
@@ -73,6 +75,8 @@ int main() {
     }
     puts("listen successful");
 
+
+
     while (ITERATION) {
         // Verbindung eines Clients wird entgegengenommen
         ClientSocket = accept(sock, (struct sockaddr *) &clientAddr, &client_len);
@@ -82,9 +86,10 @@ int main() {
         puts("Connection accepted");
         printf("Connection accepted from %s:%d\n", inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port));
 
+ //       if ((childpid = fork()) == 0) {
+ //           close(sock);
 
-        if ((childpid = fork()) == 0) {
-            close(sock);
+
 
 
             //Zurückschicken der Daten, solange der Client welche schickt (und kein Fehler passiert)
@@ -113,15 +118,15 @@ int main() {
                 switch (command) {
                     case 0:
                         printf("Gehe in put\n");
-                        success = put(key, value);
+                        success = put(key, value, database);
                         break;
                     case 1:
                         printf("Gehe in get\n");
-                        success = get(key, value);
+                        success = get(key, value, database);
                         break;
                     case 2:
                         printf("Gehe in del\n");
-                        success = del(key);
+                        success = del(key, database);
                         break;
                     case 3:
                         printf("CLOSE\n");
@@ -145,4 +150,4 @@ int main() {
             return 0;
         }
     }
-}
+//}

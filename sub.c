@@ -11,7 +11,7 @@ int readCommand(char input[], char key[], char value[]) {
     printf("gehe in Methode \n");
     char input2[strlen(input)];
     strcpy(input2, input);
-    // Extract the first token
+
     char *token = strtok(input2, " ");
     if (token == NULL) {
         return 0;
@@ -28,7 +28,7 @@ int readCommand(char input[], char key[], char value[]) {
     if (strcmp(command, "GET") == 0 || strcmp(command, "DEL") == 0) {
         getOrDel = 1;
     }
-    // loop through the string to extract all other tokens
+
     while (token != NULL) {
         token = strtok(NULL, " ");
         if (token != NULL) {
