@@ -51,6 +51,12 @@ int readCommand(char input[], char key[], char value[]) {
         return 2;
     } else if (strcmp(command, "QUIT") == 0){
         return 3;
+    } else if (strcmp(command, "BEG") == 0){
+        return 4;
+    } else if (strcmp(command, "END") == 0){
+        return 5;
+    } else if (strcmp(command,"SUB") == 0){
+        return 6;
     } else {
         return -1;
     }

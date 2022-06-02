@@ -1,9 +1,20 @@
 #include <stdio.h>
 #include "KeyValueStore.h"
 #include <string.h>
-#include "KeyAndValue.h"
+#include <sys/shm.h>
+#include <sys/sem.h>
 
-struct KeyAndValue database[1000];
+
+struct KeyAndValue{
+    char key[100];
+    char value[100];
+} KeyAndValue;
+
+int shID;
+int semID;
+unsigned short marker[1];
+
+struct KeyAndValue *database;
 
 
 int put(char key[], char value[]) {
@@ -67,3 +78,44 @@ int del(char key[]){
     }
     return 0;
 }
+
+void initSharedMemory(){
+    shID = shmget(IPC_PRIVATE, 100 * sizeof(struct KeyAndValue), IPC_CREAT | 0777);
+    database = shmat(shID,NULL,0);
+}
+
+void detachSharedMemory(){
+    shmdt(database);
+    shmctl(shID,IPC_RMID,NULL);
+}
+
+int initSemaphore(){
+    semID = semget(IPC_PRIVATE, 1, IPC_CREAT | 0777);
+    if(semID == -1){
+        perror("Could not create Semaphore");
+    }
+    marker[0] = 1;
+    semctl(semID,1,SETALL,marker);
+}
+
+void deleteSemaphore(){
+    semctl(semID, 0, IPC_RMID);
+}
+
+int status;
+
+int beg(){
+    status = 1;
+    return 0;
+}
+int end(){
+    status = 0;
+    return 0;
+}
+
+int sub(char key[]){
+    printf("Client subscribed to %s\n", key);
+    return 0;
+}
+
+

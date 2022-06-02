@@ -6,8 +6,8 @@
 #include <netinet/in.h>
 #include "KeyValueStore.h"
 #include "sub.h"
-#include "KeyAndValue.h"
 #include <sys/shm.h>
+#include <sys/sem.h>
 
 
 #include <arpa/inet.h>
@@ -23,6 +23,12 @@
 //--------------------------------------------------- Server with Socket ----------------------------------------------------------
 
 int main() {
+    //Für Semaphore und UP/DOWN Operationen
+    struct sembuf enter, leave;
+    enter.sem_num = leave.sem_num = 0;
+    enter.sem_flg = leave.sem_flg = SEM_UNDO;
+    enter.sem_op = -1;
+    leave.sem_op = 1;
 
     struct sockaddr_in server;
     socklen_t client_len;
@@ -34,6 +40,9 @@ int main() {
 
     //Child process id
     pid_t childpid;
+
+    //Semaphore ID
+    int semID;
 
     char socket_message[2000];
     int bytes_read_size;
@@ -75,7 +84,9 @@ int main() {
     }
     puts("listen successful");
 
-
+    initSemaphore();
+    semID = initSemaphore();
+    initSharedMemory();
 
     while (ITERATION) {
         // Verbindung eines Clients wird entgegengenommen
@@ -86,14 +97,13 @@ int main() {
         puts("Connection accepted");
         printf("Connection accepted from %s:%d\n", inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port));
 
- //       if ((childpid = fork()) == 0) {
- //           close(sock);
 
 
+        if (fork() == 0) {
+        while(1){
 
+                //Zurückschicken der Daten, solange der Client welche schickt (und kein Fehler passiert)
 
-            //Zurückschicken der Daten, solange der Client welche schickt (und kein Fehler passiert)
-            while (1) {
 
                 bytes_read_size = read(ClientSocket, socket_message, 2000);
 
@@ -133,6 +143,16 @@ int main() {
                         close(sock);
                         close(ClientSocket);
                         return 0;
+                    case 4:
+                        printf("Gehe in Beg\n");
+                        beg();
+                        semop(semID, &enter, 1);
+                        break;
+                    case 5:
+                        printf("Gehe in End\n");
+                        end();
+                        semop(semID, &leave, 1);
+                        break;
                     default:
                         printf("Normal stop\n");
                         printf("sending back the %d bytes I received... \n", bytes_read_size);
@@ -144,10 +164,14 @@ int main() {
                     write(ClientSocket, output, strlen(output));
                 }
             }
-
         }
-        if (close(ClientSocket)) {
+        if(close(ClientSocket)) {
+            detachSharedMemory();
+            deleteSemaphore();
             return 0;
         }
     }
-//}
+
+}
+
+
