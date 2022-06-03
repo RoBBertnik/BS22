@@ -156,6 +156,9 @@ int main() {
                     case 6:
                         printf("Gehe in Sub\n");
                         success = sub(key, ClientSocket);
+                        if(success == 1){
+                            get(key, value);
+                        }
                         break;
                     default:
                         printf("Normal stop\n");
