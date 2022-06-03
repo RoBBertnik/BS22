@@ -153,6 +153,10 @@ int main() {
                         end();
                         semop(semID, &leave, 1);
                         break;
+                    case 6:
+                        printf("Gehe in Sub\n");
+                        success = sub(key, ClientSocket);
+                        break;
                     default:
                         printf("Normal stop\n");
                         printf("sending back the %d bytes I received... \n", bytes_read_size);
@@ -160,8 +164,7 @@ int main() {
                         break;
                 }
                 if (command > -1) {
-                    commandPrint(command, key, value, success, output);
-                    write(ClientSocket, output, strlen(output));
+                    commandPrint(ClientSocket, command, key, value, success, output);
                 }
             }
         }

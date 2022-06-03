@@ -8,6 +8,7 @@
 struct KeyAndValue{
     char key[100];
     char value[100];
+    int subscribers[100];
 } KeyAndValue;
 
 int shID;
@@ -113,9 +114,34 @@ int end(){
     return 0;
 }
 
-int sub(char key[]){
-    printf("Client subscribed to %s\n", key);
+int sub(char key[], int ClientSocket){
+    int counter = 0;
+    while(database[counter].key[0] != '\0'){
+        if(strcmp(database[counter].key, key) == 0){
+            int secondCounter = 0;
+            while(database[counter].subscribers[secondCounter] != '\0'){
+                secondCounter++;
+            }
+            database[counter].subscribers[secondCounter] = ClientSocket;
+            printf("Client subscribed to %s\n", key);
+            return 1;
+        }
+        counter++;
+    }
     return 0;
+}
+
+int* pub(char key[]){
+    int counter = 0;
+    while(database[counter].key[0] != '\0'){
+        if(strcmp(database[counter].key, key) == 0){
+            if(database[counter].subscribers[0] != '\0'){
+                return database[counter].subscribers;
+            }
+        }
+        counter++;
+    }
+    return NULL;
 }
 
 

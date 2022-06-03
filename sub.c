@@ -1,4 +1,5 @@
 #include "sub.h"
+#include "KeyValueStore.h"
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -62,11 +63,11 @@ int readCommand(char input[], char key[], char value[]) {
     }
 }
 
-int commandPrint(int command, char key[], char value[], int success, char output[]) {
+int commandPrint(int ClientSocket, int command, char key[], char value[], int success, char output[]) {
 
     memset(output, 0, strlen(output));
-    int putOrGet = 0;
-    int getOrDel = 0;
+    int del = 0;
+    int put = 0;
 
     char * deleted = "key_deleted";
     char * nonexistent = "key_nonexistent";
@@ -74,14 +75,14 @@ int commandPrint(int command, char key[], char value[], int success, char output
 
     if (command == 0) {
         strcat(output, "PUT");
-        putOrGet = 1;
+        put = 1;
     } else if (command == 1) {
         strcat(output, "GET");
-        putOrGet = 1;
-        getOrDel = 1;
     } else if (command == 2) {
         strcat(output, "DEL");
-        getOrDel = 1;
+        del = 1;
+    } else if (command == 6){
+        strcat(output, "SUB");
     }
 
     strcat(output, ":");
@@ -89,20 +90,33 @@ int commandPrint(int command, char key[], char value[], int success, char output
     strcat(output, ":");
 
     if (success) {
-        if (putOrGet) {
-            strcat(output, value);
+        if (del) {
+            strcat(output,  deleted);
         }
         else{
-            strcat(output,  deleted);
+            strcat(output, value);
         }
     }
     else{
-        if(getOrDel){
-            strcat(output, nonexistent);
+        if(put){
+            strcat(output, put_failed);
         }
         else{
-            strcat(output, put_failed);
+            strcat(output, nonexistent);
         }
     }
     strcat(output, "\n");
+
+    if(put || del){
+        int * subscriberArray;
+        subscriberArray = pub(key);
+        int counter = 0;
+        while(subscriberArray[counter] != '\0'){
+            write(subscriberArray[counter], output, strlen(output));
+            counter++;
+        }
+    }
+
+
+    write(ClientSocket, output, strlen(output));
 }

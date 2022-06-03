@@ -9,7 +9,10 @@ void initSharedMemory();
 void detachSharedMemory();
 int beg();
 int end();
-int sub(char key[]);
+int sub(char key[], int ClientSocket);
+
+int* pub(char key[]);
+
 int initSemaphore();
 void deleteSemaphore();
 
