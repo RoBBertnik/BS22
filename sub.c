@@ -4,6 +4,9 @@
 #include <string.h>
 #include <unistd.h>
 
+
+
+
 int readCommand(char input[], char key[], char value[]) {
 
     memset(key, 0, strlen(key));
@@ -56,14 +59,14 @@ int readCommand(char input[], char key[], char value[]) {
         return 4;
     } else if (strcmp(command, "END") == 0){
         return 5;
-    } else if (strcmp(command,"SUB") == 0){
+    } else if (strcmp(command, "SUB") == 0){
         return 6;
     } else {
         return -1;
     }
 }
 
-int commandPrint(int ClientSocket, int command, char key[], char value[], int success, char output[]) {
+void commandPrint(int ClientSocket, int command, char key[], char value[], int success, char output[]) {
 
     memset(output, 0, strlen(output));
     int del = 0;
@@ -108,13 +111,7 @@ int commandPrint(int ClientSocket, int command, char key[], char value[], int su
     strcat(output, "\n");
 
     if(put || del){
-        int * subscriberArray;
-        subscriberArray = pub(key);
-        int counter = 0;
-        while(subscriberArray[counter] != '\0'){
-            write(subscriberArray[counter], output, strlen(output));
-            counter++;
-        }
+        pub(key);
     }
 
 

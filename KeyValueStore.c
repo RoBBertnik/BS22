@@ -1,21 +1,34 @@
 #include <stdio.h>
 #include "KeyValueStore.h"
+#include "MessageQueues.h"
 #include <string.h>
 #include <sys/shm.h>
 #include <sys/sem.h>
+#include <unistd.h>
+
 
 
 struct KeyAndValue{
     char key[100];
     char value[100];
-    int subscribers[100];
 } KeyAndValue;
 
+struct Subscriptions{
+    char key[100];
+    int pID;
+} Subscriptions;
+
+
+
+
 int shID;
+int subID;
 int semID;
 unsigned short marker[1];
 
 struct KeyAndValue *database;
+struct Subscriptions *subscribers;
+
 
 
 int put(char key[], char value[]) {
@@ -80,14 +93,22 @@ int del(char key[]){
     return 0;
 }
 
+
+
+
+
 void initSharedMemory(){
     shID = shmget(IPC_PRIVATE, 100 * sizeof(struct KeyAndValue), IPC_CREAT | 0777);
     database = shmat(shID,NULL,0);
+    subID = shmget(IPC_PRIVATE, 100 * sizeof(struct Subscriptions), IPC_CREAT | 0777);
+    subscribers = shmat(subID, NULL, 0);
 }
 
 void detachSharedMemory(){
     shmdt(database);
     shmctl(shID,IPC_RMID,NULL);
+    shmdt(subscribers);
+    shmctl(subID, IPC_RMID, NULL);
 }
 
 int initSemaphore(){
@@ -119,10 +140,11 @@ int sub(char key[], int ClientSocket){
     while(database[counter].key[0] != '\0'){
         if(strcmp(database[counter].key, key) == 0){
             int secondCounter = 0;
-            while(database[counter].subscribers[secondCounter] != '\0'){
+            while(subscribers[secondCounter].pID != '\0'){
                 secondCounter++;
             }
-            database[counter].subscribers[secondCounter] = ClientSocket;
+            subscribers[secondCounter].pID = ClientSocket;
+            strcpy(subscribers[secondCounter].key, key);
             printf("Client subscribed to %s\n", key);
             return 1;
         }
@@ -131,17 +153,14 @@ int sub(char key[], int ClientSocket){
     return 0;
 }
 
-int* pub(char key[]){
+void pub(char key[]){
     int counter = 0;
-    while(database[counter].key[0] != '\0'){
-        if(strcmp(database[counter].key, key) == 0){
-            if(database[counter].subscribers[0] != '\0'){
-                return database[counter].subscribers;
-            }
+    while(subscribers[counter].key[0] != '\0'){
+        if(strcmp(subscribers[counter].key, key) == 0 && subscribers[counter].pID != getpid()){
+            notifySubscribers(key, subscribers[counter].pID);
         }
         counter++;
     }
-    return NULL;
 }
 
 

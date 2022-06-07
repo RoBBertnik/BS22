@@ -123,6 +123,7 @@ int main() {
                 char output[100];
                 int success = 0;
 
+                fork();
                 int command = readCommand(socket_message, key, value);
 
                 switch (command) {

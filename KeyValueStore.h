@@ -7,11 +7,13 @@ int get(char key[], char res[]);
 int del(char key[]);
 void initSharedMemory();
 void detachSharedMemory();
+void initializeMessageQueue();
+void CloseMessageQueue();
 int beg();
 int end();
 int sub(char key[], int ClientSocket);
 
-int* pub(char key[]);
+void pub(char key[]);
 
 int initSemaphore();
 void deleteSemaphore();
