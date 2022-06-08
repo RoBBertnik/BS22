@@ -5,6 +5,8 @@
 #include <sys/shm.h>
 #include <sys/sem.h>
 #include <unistd.h>
+#include <sys/msg.h>
+#include "sub.h"
 
 
 
@@ -13,21 +15,30 @@ struct KeyAndValue{
     char value[100];
 } KeyAndValue;
 
-struct Subscriptions{
+/*struct Subscriptions{
     char key[100];
     int pID;
-} Subscriptions;
+}subscriptions;
+
+struct Message{
+    long msg_type;
+    char msg_text[100];
+}Message;
+ */
 
 
 
-
+int msID;
+int msKey;
 int shID;
 int subID;
 int semID;
 unsigned short marker[1];
 
 struct KeyAndValue *database;
-struct Subscriptions *subscribers;
+struct Subscriptions_ *subscribers;
+struct Message_ mess;
+
 
 
 
@@ -100,7 +111,7 @@ int del(char key[]){
 void initSharedMemory(){
     shID = shmget(IPC_PRIVATE, 100 * sizeof(struct KeyAndValue), IPC_CREAT | 0777);
     database = shmat(shID,NULL,0);
-    subID = shmget(IPC_PRIVATE, 100 * sizeof(struct Subscriptions), IPC_CREAT | 0777);
+    subID = shmget(IPC_PRIVATE, 100 * sizeof(Subscriptions), IPC_CREAT | 0777);
     subscribers = shmat(subID, NULL, 0);
 }
 
@@ -135,7 +146,7 @@ int end(){
     return 0;
 }
 
-int sub(char key[], int ClientSocket){
+int sub(char key[]){
     int counter = 0;
     while(database[counter].key[0] != '\0'){
         if(strcmp(database[counter].key, key) == 0){
@@ -143,7 +154,7 @@ int sub(char key[], int ClientSocket){
             while(subscribers[secondCounter].pID != '\0'){
                 secondCounter++;
             }
-            subscribers[secondCounter].pID = ClientSocket;
+            subscribers[secondCounter].pID = getpid();
             strcpy(subscribers[secondCounter].key, key);
             printf("Client subscribed to %s\n", key);
             return 1;
@@ -153,6 +164,7 @@ int sub(char key[], int ClientSocket){
     return 0;
 }
 
+//irrelevant
 void pub(char key[]){
     int counter = 0;
     while(subscribers[counter].key[0] != '\0'){
@@ -162,5 +174,27 @@ void pub(char key[]){
         counter++;
     }
 }
+
+
+
+void initializeMessageQueue(){
+    msID = msgget(IPC_PRIVATE,IPC_CREAT | 0777);
+}
+
+void CloseMessageQueue(){
+    msgctl(msID,IPC_RMID, NULL);
+}
+
+void notifySubscribers(char key[], char *input){
+    Message message;
+    for(int i = 0; i < SUBSCRIPTION_SIZE; i++){
+        if(strcmp(subscribers[i].key, key) == 0 && subscribers[i].pID != getpid()){
+            message.msg_type = subscribers[i].pID;
+            strcpy(message.msg_text,input);
+            msgsnd(msID,&message,TEXT_LENGTH,0);
+        }
+    }
+}
+
 
 

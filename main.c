@@ -8,6 +8,10 @@
 #include "sub.h"
 #include <sys/shm.h>
 #include <sys/sem.h>
+#include <sys/msg.h>
+#include "MessageQueues.h"
+#include <sys/prctl.h>
+#include <sys/signal.h>
 
 
 #include <arpa/inet.h>
@@ -84,6 +88,7 @@ int main() {
     }
     puts("listen successful");
 
+    initializeMessageQueue();
     initSemaphore();
     semID = initSemaphore();
     initSharedMemory();
@@ -98,9 +103,21 @@ int main() {
         printf("Connection accepted from %s:%d\n", inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port));
 
 
-
+        //Client Prozess
         if (fork() == 0) {
-        while(1){
+
+            //Subscriber Prozess
+            if(fork() == 0){
+                //Wenn parent stirbt, stirbt auch child Prozess
+                prctl(PR_SET_PDEATHSIG, SIGTERM);
+                Message mess;
+                while(1){
+                    msgrcv(msID,&mess,TEXT_LENGTH,getppid(),0);
+                    write(ClientSocket, mess.msg_text, strlen(mess.msg_text));
+                }
+            }
+
+            while (1) {
 
                 //Zurückschicken der Daten, solange der Client welche schickt (und kein Fehler passiert)
 
@@ -123,60 +140,63 @@ int main() {
                 char output[100];
                 int success = 0;
 
-                fork();
-                int command = readCommand(socket_message, key, value);
 
-                switch (command) {
-                    case 0:
-                        printf("Gehe in put\n");
-                        success = put(key, value);
-                        break;
-                    case 1:
-                        printf("Gehe in get\n");
-                        success = get(key, value);
-                        break;
-                    case 2:
-                        printf("Gehe in del\n");
-                        success = del(key);
-                        break;
-                    case 3:
-                        printf("CLOSE\n");
-                        close(sock);
-                        close(ClientSocket);
-                        return 0;
-                    case 4:
-                        printf("Gehe in Beg\n");
-                        beg();
-                        semop(semID, &enter, 1);
-                        break;
-                    case 5:
-                        printf("Gehe in End\n");
-                        end();
-                        semop(semID, &leave, 1);
-                        break;
-                    case 6:
-                        printf("Gehe in Sub\n");
-                        success = sub(key, ClientSocket);
-                        if(success == 1){
-                            get(key, value);
+
+                        int command = readCommand(socket_message, key, value);
+
+                        switch (command) {
+                            case 0:
+                                printf("Gehe in put\n");
+                                success = put(key, value);
+                                break;
+                            case 1:
+                                printf("Gehe in get\n");
+                                success = get(key, value);
+                                break;
+                            case 2:
+                                printf("Gehe in del\n");
+                                success = del(key);
+                                break;
+                            case 3:
+                                printf("CLOSE\n");
+                                close(sock);
+                                close(ClientSocket);
+                                return 0;
+                            case 4:
+                                printf("Gehe in Beg\n");
+                                beg();
+                                semop(semID, &enter, 1);
+                                break;
+                            case 5:
+                                printf("Gehe in End\n");
+                                end();
+                                semop(semID, &leave, 1);
+                                break;
+                            case 6:
+                                printf("Gehe in Sub\n");
+                                success = sub(key);
+                                if (success == 1) {
+                                    get(key, value);
+                                }
+                                break;
+                            default:
+                                printf("Normal stop\n");
+                                printf("sending back the %d bytes I received... \n", bytes_read_size);
+                                write(ClientSocket, socket_message, bytes_read_size);
+                                break;
                         }
-                        break;
-                    default:
-                        printf("Normal stop\n");
-                        printf("sending back the %d bytes I received... \n", bytes_read_size);
-                        write(ClientSocket, socket_message, bytes_read_size);
-                        break;
-                }
-                if (command > -1) {
-                    commandPrint(ClientSocket, command, key, value, success, output);
-                }
+                        if (command > -1) {
+                            commandPrint(ClientSocket, command, key, value, success, output);
+                        }
+
             }
         }
-        if(close(ClientSocket)) {
-            detachSharedMemory();
-            deleteSemaphore();
-            return 0;
-        }
+            if (close(ClientSocket)) {
+                detachSharedMemory();
+                deleteSemaphore();
+                CloseMessageQueue();
+                return 0;
+            }
     }
 
 }

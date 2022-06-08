@@ -1,5 +1,6 @@
 #include "sub.h"
 #include "KeyValueStore.h"
+#include "MessageQueues.h"
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -111,9 +112,9 @@ void commandPrint(int ClientSocket, int command, char key[], char value[], int s
     strcat(output, "\n");
 
     if(put || del){
-        pub(key);
+        notifySubscribers(key,output);
     }
-
 
     write(ClientSocket, output, strlen(output));
 }
+
