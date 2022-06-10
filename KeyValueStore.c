@@ -26,8 +26,6 @@ struct Message{
 }Message;
  */
 
-
-
 int msID;
 int msKey;
 int shID;
@@ -38,6 +36,8 @@ unsigned short marker[1];
 struct KeyAndValue *database;
 struct Subscriptions_ *subscribers;
 struct Message_ mess;
+struct sembuf enter,leave;
+
 
 
 
@@ -129,21 +129,23 @@ int initSemaphore(){
     }
     marker[0] = 1;
     semctl(semID,1,SETALL,marker);
+    enter.sem_op = -1;
+    leave.sem_op = 1;
+    enter.sem_num = leave.sem_num = 0;
+    enter.sem_flg = leave.sem_flg = SEM_UNDO;
+    semop(semID,&enter,1);
 }
 
 void deleteSemaphore(){
     semctl(semID, 0, IPC_RMID);
 }
 
-int status;
 
 int beg(){
-    status = 1;
-    return 0;
+    semop(semID,&enter,1);
 }
 int end(){
-    status = 0;
-    return 0;
+    semop(semID,&leave,1);
 }
 
 int sub(char key[]){

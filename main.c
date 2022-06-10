@@ -28,11 +28,12 @@
 
 int main() {
     //Für Semaphore und UP/DOWN Operationen
-    struct sembuf enter, leave;
+   /* struct sembuf enter, leave;
     enter.sem_num = leave.sem_num = 0;
     enter.sem_flg = leave.sem_flg = SEM_UNDO;
     enter.sem_op = -1;
     leave.sem_op = 1;
+*/
 
     struct sockaddr_in server;
     socklen_t client_len;
@@ -89,14 +90,15 @@ int main() {
     puts("listen successful");
 
     initializeMessageQueue();
-    initSemaphore();
+    //initSemaphore();
     semID = initSemaphore();
     initSharedMemory();
+
 
     while (ITERATION) {
         // Verbindung eines Clients wird entgegengenommen
         ClientSocket = accept(sock, (struct sockaddr *) &clientAddr, &client_len);
-        if (ClientSocket < 0) {
+        if (ClientSocket <= 0) {
             perror("accept failed");
         }
         puts("Connection accepted");
@@ -159,18 +161,18 @@ int main() {
                                 break;
                             case 3:
                                 printf("CLOSE\n");
-                                close(sock);
                                 close(ClientSocket);
+                                close(sock);
                                 return 0;
                             case 4:
+                                //semop(semID, &enter, 1);
                                 printf("Gehe in Beg\n");
                                 beg();
-                                semop(semID, &enter, 1);
                                 break;
                             case 5:
+                                //semop(semID, &leave, 1);
                                 printf("Gehe in End\n");
                                 end();
-                                semop(semID, &leave, 1);
                                 break;
                             case 6:
                                 printf("Gehe in Sub\n");
@@ -185,18 +187,20 @@ int main() {
                                 write(ClientSocket, socket_message, bytes_read_size);
                                 break;
                         }
-                        if (command > -1) {
+                        if (command > -1 && command != 4 && command != 5) {
                             commandPrint(ClientSocket, command, key, value, success, output);
                         }
 
             }
+
+
         }
-            if (close(ClientSocket)) {
-                detachSharedMemory();
-                deleteSemaphore();
-                CloseMessageQueue();
-                return 0;
+            if(close(ClientSocket)){
+            detachSharedMemory();
+            deleteSemaphore();
+            CloseMessageQueue();
             }
+
     }
 
 }
